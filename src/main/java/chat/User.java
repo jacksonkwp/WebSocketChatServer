@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class User {
-	String name = "unknown";
-	SocketEndPoint endPoint;
-	boolean dnd;
+	private String name = "unknown";
+	private SocketEndPoint endPoint;
+	private boolean online;
 }
