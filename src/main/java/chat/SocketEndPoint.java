@@ -44,7 +44,7 @@ public class SocketEndPoint {
     	//look up sender for their name
     	String sender = "unknown";
         for (User user : users) {
-        	if (user.getEndPoint().session.getId() == session.getId()) {
+        	if (user.getEndPoint().session.getId().equals(session.getId())) {
         		sender = user.getName();
         		break;
         	}
@@ -84,8 +84,8 @@ public class SocketEndPoint {
     			try {
     				user.getEndPoint().session
     					.getBasicRemote()
-    					.sendObject(msg);
-    			} catch (IOException | EncodeException e) {
+    					.sendText(msg);
+    			} catch (IOException e) {
     				System.out.println("An error occured");
     			}
     		}
