@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     connectButton.addEventListener('click', connect);
     sendButton.addEventListener('click', send);
-    for(radio in statusRadios) {
-	    statusRadios[radio].onclick = updateStatus;
+    for(let radio in statusRadios) {
+	    statusRadios[radio].addEventListener('change', updateStatus);
 	}
 });
 
