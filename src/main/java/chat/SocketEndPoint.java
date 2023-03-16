@@ -74,6 +74,9 @@ public class SocketEndPoint {
 	        for (User user : users) {
 	        	if (user.getEndPoint().session.getId().equals(session.getId())) {
 	        		user.setOnline(msg.getBoolean("online"));
+					JSONObject updateMsg = new JSONObject();
+					updateMsg.put("message", String.format("%s has updated to %s.", user.getName(),(user.isOnline() ? "online":"do not disturb")));
+					broadcast(updateMsg.toString());
 	        		break;
 	        	}
 	        }
