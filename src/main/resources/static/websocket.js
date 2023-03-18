@@ -21,11 +21,24 @@ function connect() {
 
     ws.onmessage = function (event) {
 		var msg = JSON.parse(event.data);
+		console.log("rm "+ JSON.stringify(msg))
 		
 		if (msg.hasOwnProperty('message')) {
 	        var log = document.getElementById('log');
 	        console.log('recieved: ' + msg.message);
 	        log.innerHTML += msg.message + '\n';
+		}
+		if (msg.hasOwnProperty('users')) {
+			var us = JSON.parse(msg.users)
+			console.log('len ' + us.length);
+			let html = '';
+			for (u in us) {
+				html  += '<div style="clear: both"><div style="float: left;width: 100px">' + us[u].name + '</div><div style="float: left; width: 100px">' + (us[u].online?'online':'dnd') +'</div></div>';
+				console.log(us[u].name);
+			}
+			var users = document.getElementById('users');
+
+			users.innerHTML = html;
 		}
     };
 }

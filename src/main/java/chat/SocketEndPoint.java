@@ -3,6 +3,8 @@ package chat;
 import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.*;
 
 import org.springframework.stereotype.Component;
@@ -35,6 +37,7 @@ public class SocketEndPoint {
         newUser.setName(name);
         newUser.setOnline(true);
         users.add(newUser);
+		getAllUsers();
         
         //notify users of new user
         JSONObject msg = new JSONObject();
@@ -77,6 +80,7 @@ public class SocketEndPoint {
 					JSONObject updateMsg = new JSONObject();
 					updateMsg.put("message", String.format("%s has updated to %s.", user.getName(),(user.isOnline() ? "online":"do not disturb")));
 					broadcast(updateMsg.toString());
+					getAllUsers();
 	        		break;
 	        	}
 	        }
@@ -100,12 +104,33 @@ public class SocketEndPoint {
         JSONObject msg = new JSONObject();
         msg.put("message", leavingUser + " left the chat.");
         broadcast(msg.toString());
+		getAllUsers();
     }
 
     @OnError
     public void onError(Session session, Throwable throwable) {
         System.out.println("OnError: An error occured");
     }
+
+	private static void getAllUsers(){
+		ObjectMapper mapper = new ObjectMapper();
+		users.forEach(user -> {
+			synchronized (user) {
+				try {
+
+					String json = mapper.writeValueAsString(users);
+					System.out.println("user " + json);
+					JSONObject msg = new JSONObject();
+					msg.put("users", json);
+					user.getEndPoint().session
+							.getBasicRemote()
+							.sendText(msg.toString());
+				}catch (Exception e) {
+					System.out.println(e);
+				}
+			}
+		});
+	}
     
     private static void broadcast(String msg) 
     		throws IOException, EncodeException {
