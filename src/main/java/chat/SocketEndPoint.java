@@ -19,7 +19,7 @@ import jakarta.websocket.server.PathParam;
 import jakarta.websocket.server.ServerEndpoint;
 
 @Component
-@ServerEndpoint(value = "/chat/{name}")
+@ServerEndpoint(value = "/chat/{name}", encoders = {MessageEncoder.class}, decoders = {MessageDecoder.class})
 public class SocketEndPoint {
 	
 	private Session session;
@@ -40,57 +40,54 @@ public class SocketEndPoint {
 		getAllUsers();
         
         //notify users of new user
-        JSONObject msg = new JSONObject();
-        msg.put("message", newUser.getName() + " joined the chat.");
-        broadcast(msg.toString());
+        //JSONObject msg = new JSONObject();
+		Message joinMsg = new Message();
+        joinMsg.setMessage(newUser.getName() + " joined the chat.");
+        broadcast(joinMsg);
+
     }
 
     @OnMessage
-    public void onMessage(Session session, String stringMsg) throws
-    		IOException, EncodeException, JSONException {
-        
-    	JSONObject msg = new JSONObject(stringMsg);
-    	
-    	//broadcast the message if there is one
-    	if (msg.has("message")) {
-	    	
-    		//look up sender for their name
-	    	String sender = "unknown";
-	        for (User user : users) {
-	        	if (user.getEndPoint().session.getId().equals(session.getId())) {
-	        		sender = user.getName();
-	        		break;
-	        	}
-	        }
-	        
-	        //forward the message to the other users with sender info
-	        JSONObject forwardMsg = new JSONObject();
-	        forwardMsg.put("message", sender + ": " + msg.getString("message"));
-	        broadcast(forwardMsg.toString());
-	        
-    	}
-    	
-    	//update the status if its passed
-    	if (msg.has("online")) {
-    		
-    		//look up sender and update their status
-	        for (User user : users) {
-	        	if (user.getEndPoint().session.getId().equals(session.getId())) {
-	        		user.setOnline(msg.getBoolean("online"));
-					JSONObject updateMsg = new JSONObject();
-					updateMsg.put("message", String.format("%s has updated to %s.", user.getName(),(user.isOnline() ? "online":"do not disturb")));
-					broadcast(updateMsg.toString());
-					getAllUsers();
-	        		break;
-	        	}
-	        }
-    	}
+    public void onMessage(Session session, Message msg) throws IOException, EncodeException {
+        //broadcast the message if there is one
+        if (msg.getMessage() != null) {
+            //look up sender for their name
+            String sender = "unknown";
+            for (User user : users) {
+                if (user.getEndPoint().session.getId().equals(session.getId())) {
+                    sender = user.getName();
+                    break;
+                }
+            }
+
+            //forward the message to the other users with sender info
+            Message forwardMsg = new Message();
+            forwardMsg.setMessage(sender + ": " + msg.getMessage());
+            broadcast(forwardMsg);
+        }
+
+        //update the status if its passed
+        if (msg.hasOnlineStatus()) {
+            //look up sender and update their status
+            for (User user : users) {
+                if (user.getEndPoint().session.getId().equals(session.getId())) {
+                    user.setOnline(msg.isOnline());
+                    Message updateMsg = new Message();
+                    updateMsg.setMessage(String.format("%s has updated to %s.", user.getName(), (user.isOnline() ? "online" : "do not disturb")));
+                    broadcast(updateMsg);
+                    getAllUsers();
+                    break;
+                }
+            }
+        }
     }
+
 
     @OnClose
     public void onClose(Session session) throws IOException, EncodeException, JSONException {
     	
     	//remove user
+    	
     	String leavingUser = "unknown";
         for (User user : users) {
         	if (user.getEndPoint().session.getId() == session.getId()) {
@@ -101,9 +98,10 @@ public class SocketEndPoint {
         }
     	
         //notify other users of the leaving user
-        JSONObject msg = new JSONObject();
-        msg.put("message", leavingUser + " left the chat.");
-        broadcast(msg.toString());
+        //JSONObject msg = new JSONObject();
+        Message leaveMsg = new Message();
+        leaveMsg.setMessage(leavingUser + " left the chat.");
+        broadcast(leaveMsg);
 		getAllUsers();
     }
 
@@ -112,37 +110,41 @@ public class SocketEndPoint {
         System.out.println("OnError: An error occured");
     }
 
-	private static void getAllUsers(){
-		ObjectMapper mapper = new ObjectMapper();
-		users.forEach(user -> {
-			synchronized (user) {
-				try {
+    private static void getAllUsers() {
+        ObjectMapper mapper = new ObjectMapper();
+        users.forEach(user -> {
+            synchronized (user) {
+                try {
+                    String json = mapper.writeValueAsString(users);
+                    System.out.println("user " + json);
+                    Message msg = new Message();
+                    msg.setUsers(json);
+                    user.getEndPoint().session
+                            .getBasicRemote()
+                            .sendObject(msg);
+                } catch (Exception e) {
+                    System.out.println(e);
+                }
+            }
+        });
+    }
 
-					String json = mapper.writeValueAsString(users);
-					System.out.println("user " + json);
-					JSONObject msg = new JSONObject();
-					msg.put("users", json);
-					user.getEndPoint().session
-							.getBasicRemote()
-							.sendText(msg.toString());
-				}catch (Exception e) {
-					System.out.println(e);
-				}
-			}
-		});
-	}
     
-    private static void broadcast(String msg) 
-    		throws IOException, EncodeException {
+	private static void broadcast(Message msg) throws IOException, EncodeException {
     	
     	//send msg to each user that is online
     	users.forEach(user -> {
     		synchronized (user) {
     			try {
     				if (user.isOnline()) {
-	    				user.getEndPoint().session
-	    					.getBasicRemote()
-	    					.sendText(msg);
+	    				try {
+							user.getEndPoint().session
+								.getBasicRemote()
+								.sendObject(msg);
+						} catch (EncodeException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
     				}
     			} catch (IOException e) {
     				System.out.println("Brodcast: An error occured");

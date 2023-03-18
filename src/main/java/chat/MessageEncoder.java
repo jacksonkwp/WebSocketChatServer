@@ -9,17 +9,36 @@ import org.json.JSONObject;
 
 public class MessageEncoder implements Encoder.Text<Message> {
 
-    @Override
-    public String encode(Message message) throws EncodeException {
-        JSONObject jsonMessage = new JSONObject();
-        try {
-			jsonMessage.put("message", message.getMessage());
-		} catch (JSONException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-        return jsonMessage.toString();
-    }
+	@Override
+	public String encode(Message msg) throws EncodeException {
+	    JSONObject json = new JSONObject();
+	    if (msg.getMessage() != null) {
+	        try {
+				json.put("message", msg.getMessage());
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	    }
+	    if (msg.hasOnlineStatus()) {
+	        try {
+				json.put("online", msg.isOnline());
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	    }
+	    if (msg.getUsers() != null) {
+	        try {
+				json.put("users", msg.getUsers());
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	    }
+	    return json.toString();
+	}
+
 
     @Override
     public void init(EndpointConfig endpointConfig) {

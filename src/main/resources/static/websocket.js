@@ -20,7 +20,7 @@ function connect() {
     ws = new WebSocket('ws://' + host + pathname + 'chat/' + username);
 
     ws.onmessage = function (event) {
-		var msg = JSON.parse(event.data);
+    var msg = JSON.parse(event.data);
 		console.log("rm "+ JSON.stringify(msg))
 		
 		if (msg.hasOwnProperty('message')) {
@@ -44,17 +44,17 @@ function connect() {
 }
 
 function send() {
-	var msg = {
-		'message': document.getElementById('msg').value
-	}
-	console.log('sent: ' + msg.message);
+    var msg = {
+        'message': document.getElementById('msg').value
+    };
     ws.send(JSON.stringify(msg));
 }
 
+
 function updateStatus() {
-	var msg = {
-		'online': document.getElementById('online').checked
-	}
-	console.log('online: ' + msg.online);
-	ws.send(JSON.stringify(msg));
+    var msg = {
+        'online': document.getElementById('online').checked
+    };
+    ws.send(JSON.stringify(msg));
 }
+

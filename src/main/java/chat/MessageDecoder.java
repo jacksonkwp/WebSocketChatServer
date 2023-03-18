@@ -9,36 +9,38 @@ import org.json.JSONObject;
 
 public class MessageDecoder implements Decoder.Text<Message> {
 
-    @Override
-    public Message decode(String s) throws DecodeException {
-        JSONObject jsonMessage;
-        try {
-            jsonMessage = new JSONObject(s);
-        } catch (JSONException e) {
-            throw new DecodeException(s, "Invalid JSON format", e);
-        }
-        
-        Message message = new Message();
+	@Override
+	public Message decode(String string) throws DecodeException {
+	    JSONObject json;
+	    try {
+	        json = new JSONObject(string);
+	    } catch (JSONException e) {
+	        throw new DecodeException(string, "Failed to decode JSON.", e);
+	    }
+	    
+	    Message msg = new Message();
+	    
+	    if (json.has("message")) {
+	        try {
+	            msg.setMessage(json.getString("message"));
+	        } catch (JSONException e) {
+	            throw new DecodeException(string, "Failed to decode message.", e);
+	        }
+	    }
+	    
+	    if (json.has("online")) {
+	        try {
+	            msg.setOnline(json.getBoolean("online"));
+	            msg.setHasOnlineStatus(true);
+	        } catch (JSONException e) {
+	            throw new DecodeException(string, "Failed to decode online status.", e);
+	        }
+	    }
+	    
+	    return msg;
+	}
 
-        if (jsonMessage.has("message")) {
-            try {
-				message.setMessage(jsonMessage.getString("message"));
-			} catch (JSONException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-        }
-        if (jsonMessage.has("online")) {
-            try {
-				message.setOnline(jsonMessage.getBoolean("online"));
-			} catch (JSONException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-        }
 
-        return message;
-    }
 
     @Override
     public boolean willDecode(String s) {

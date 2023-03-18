@@ -3,12 +3,8 @@ package chat;
 public class Message {
     private String message;
     private boolean online;
-
-    public Message() {}
-
-    public Message(String message) {
-        this.message = message;
-    }
+    private boolean hasOnlineStatus;
+    private String users;
 
     public String getMessage() {
         return message;
@@ -24,5 +20,21 @@ public class Message {
 
     public void setOnline(boolean online) {
         this.online = online;
+    }
+
+    public boolean hasOnlineStatus() {
+        return hasOnlineStatus;
+    }
+
+    public void setHasOnlineStatus(boolean hasOnlineStatus) {
+        this.hasOnlineStatus = hasOnlineStatus;
+    }
+
+    public String getUsers() {
+        return users;
+    }
+
+    public void setUsers(String users) {
+        this.users = users;
     }
 }
